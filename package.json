@@ -1,0 +1,14 @@
+{
+  "name": "al-qalam-autoshop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Al Qalam Auto Shop — single-shop auto repair management (Next.js + NestJS).",
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run start:dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "seed": "npm --prefix backend run seed",
+    "typecheck": "npm --prefix frontend run typecheck"
+  }
+}

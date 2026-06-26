@@ -1,0 +1,98 @@
+// Al Qalam Auto Shop — single-shop schema (no tenant tables).
+// SQLite for the demo. To move to Postgres: change provider to "postgresql"
+// and DATABASE_URL, then `prisma migrate`. Enums are stored as strings because
+// SQLite has no native enum type; allowed values mirror @shared union types.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("ADMIN") // ADMIN | STAFF
+  createdAt    DateTime @default(now())
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  phone1    String
+  phone2    String?
+  phone3    String?
+  address   String?
+  createdAt DateTime  @default(now())
+  vehicles  Vehicle[]
+  jobs      Job[]
+
+  @@index([name])
+}
+
+model Vehicle {
+  id        String  @id @default(cuid())
+  clientId  String
+  plateNo   String
+  makeModel String
+  color     String?
+  year      Int?
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobs      Job[]
+
+  @@index([clientId])
+  @@index([plateNo])
+}
+
+model Job {
+  id            String    @id @default(cuid())
+  jobNo         String    @unique
+  clientId      String
+  vehicleId     String
+  date          DateTime  @default(now())
+  transportType String    @default("SELF_DRIVE") // SELF_DRIVE | TOWED | PICKUP | DELIVERY
+  status        String    @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | READY_FOR_PICKUP
+  mechanicName  String?
+  notes         String?
+  promisedDate  DateTime?
+  createdAt     DateTime  @default(now())
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  items    JobItem[]
+  payments Payment[]
+
+  @@index([clientId])
+  @@index([vehicleId])
+  @@index([status])
+}
+
+model JobItem {
+  id          String @id @default(cuid())
+  jobId       String
+  category    String // DENTING | PAINTING | MECHANICAL | AUTO_ELECTRIC | AC | SPARE_PARTS
+  description String
+  qty         Float  @default(1)
+  rate        Float  @default(0)
+  amount      Float  @default(0) // qty * rate, computed in the service layer
+  job         Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
+model Payment {
+  id     String   @id @default(cuid())
+  jobId  String
+  amount Float
+  method String // CASH | CARD | BANK_TRANSFER
+  date   DateTime @default(now())
+  note   String?
+  job    Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
